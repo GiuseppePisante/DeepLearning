@@ -1,8 +1,8 @@
-from pattern import Spectrum
+from pattern import Checker
 
 def main():
-    circle = Spectrum(resolution=100)
-    circle.draw()
+    circle = Checker(100, 10)
+    out = circle.draw()
     circle.show()
 
 if __name__ == "__main__":
