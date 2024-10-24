@@ -48,23 +48,28 @@ class ImageGenerator:
         batch_labels = []
 
         for _ in range(self.batch_size):
+            
+            # Shuffle if self.shuffle is true + every time we move to a new epoch
+            if self.shuffle & self.index == 0:
+                np.random.shuffle(self.image_files)
             if self.index >= len(self.image_files):
                 self.index = 0
                 self.epoch += 1
-                if self.shuffle:
-                    np.random.shuffle(self.image_files)
 
             image_file = self.image_files[self.index]
             image_path = os.path.join(self.file_path, image_file)
             image = scipy.misc.imread(image_path)
             image = scipy.misc.imresize(image, self.image_size[:2])
 
-            if self.rotation:
-                image = np.rot90(image)
-            if self.mirroring:
-                image = np.fliplr(image)
-                batch_images.append(image)
-            batch_labels.append(self.labels[image_file])
+            # Apply mirroring
+            if self.mirroring & np.random.rand() > 0.5 & self.index == 0:
+                img = np.fliplr(img)
+
+             # Apply rotation
+            if self.rotation & self.index == 0:
+                angle = np.random.choice([90, 180, 270])
+                img = scipy.misc.imrotate(img, angle)
+                batch_labels.append(self.labels[image_file])
 
             self.index += 1
 
@@ -95,14 +100,6 @@ class ImageGenerator:
         # this function takes a single image as an input and performs a random transformation
         # (mirroring and/or rotation) on it and outputs the transformed image
         #TODO: implement augmentation function
-        # Apply mirroring
-        if self.mirroring and np.random.rand() > 0.5:
-            img = np.fliplr(img)
-
-        # Apply rotation
-        if self.rotation:
-            angle = np.random.choice([90, 180, 270])
-            img = scipy.misc.imrotate(img, angle)
             
         return img
 
@@ -110,10 +107,10 @@ class ImageGenerator:
         # return the current epoch number
         return self.epoch
 
-    def class_name(self, image):
+    def class_name(self, label):
         # This function returns the class name for a specific input
         #TODO: implement class name function
-        return self.class_dict.get(self.labels[image], "Unknown")
+        return self.class_dict.get(self.labels[label], "Unknown")
     def show(self):
         # In order to verify that the generator creates batches as required, this functions calls next to get a
         # batch of images and labels and visualizes it.
