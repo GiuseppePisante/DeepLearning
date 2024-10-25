@@ -115,5 +115,22 @@ class ImageGenerator:
         # In order to verify that the generator creates batches as required, this functions calls next to get a
         # batch of images and labels and visualizes it.
         #TODO: implement show method
+        # call next method
+        batch_images, batch_labels = self.next() 
+
+        # get the number of images
+        num = len(batch_images)
+
+        # create the subplots
+        fig, axes = plt.subplots(1, num, figsize = (15, 5))
+
+        # plot i-th image with its label
+        for i in range(num):
+            axes[i].imshow(batch_images[i])
+            axes[i].set_title(self.class_name(batch_labels[i]))
+            axes[i].axis('off')
+        
+        plt.show()
+
         pass
 
