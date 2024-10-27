@@ -1,8 +1,10 @@
 import os.path
 import json
 import scipy.misc
+import imageio.v2 as imageio
 import numpy as np
 import matplotlib.pyplot as plt
+from PIL import Image, ImageOps
 
 # In this exercise task you will implement an image generator. Generator objects in python are defined as having a next function.
 # This next function returns the next generated object. In our case it returns the input of a neural network each time it gets called.
@@ -50,7 +52,7 @@ class ImageGenerator:
         for _ in range(self.batch_size):
             
             # Shuffle if self.shuffle is true + every time we move to a new epoch
-            if self.shuffle & self.index == 0:
+            if self.shuffle and self.index == 0:
                 np.random.shuffle(self.image_files)
             if self.index >= len(self.image_files):
                 self.index = 0
@@ -58,27 +60,41 @@ class ImageGenerator:
 
             image_file = self.image_files[self.index]
             image_path = os.path.join(self.file_path, image_file)
-            image = scipy.misc.imread(image_path)
-            image = scipy.misc.imresize(image, self.image_size[:2])
+
+            # Check if the file is a .npy file
+            if image_file.endswith('.npy'):
+                with open(image_path, 'rb') as f:
+                    image = np.load(f)
+            else:
+                # Read the image using imageio.v2
+                image = imageio.imread(image_path)
+
+            # Resize the image using PIL
+            image = Image.fromarray(image)
+            image = image.resize(self.image_size[:2], Image.Resampling.LANCZOS)
+            image = np.array(image)
 
             # Apply mirroring
-            if self.mirroring & np.random.rand() > 0.5 & self.index == 0:
+            if self.mirroring and np.random.rand() > 0.5 and self.index == 0:
                 img = np.fliplr(img)
 
              # Apply rotation
             if self.rotation & self.index == 0:
                 angle = np.random.choice([90, 180, 270])
-                img = scipy.misc.imrotate(img, angle)
-                batch_labels.append(self.labels[image_file])
+                image = np.array(Image.fromarray(image).rotate(angle))
 
+            batch_images.append(image)
+            batch_labels.append(self.labels[image_file])
             self.index += 1
 
         # Ensure the batch has the correct size
         while len(batch_images) < self.batch_size:
             image_file = self.image_files[self.index]
             image_path = os.path.join(self.file_path, image_file)
-            image = scipy.misc.imread(image_path)
-            image = scipy.misc.imresize(image, self.image_size[:2])
+            image = imageio.imread(image_path)
+            image = Image.fromarray(image)
+            image = image.resize(self.image_size[:2], Image.Resampling.LANCZOS)
+            image = np.array(image)
 
             if self.rotation:
                 image = np.rot90(image)
