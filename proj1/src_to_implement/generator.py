@@ -30,15 +30,20 @@ class ImageGenerator:
         self.rotation = rotation
         self.mirroring = mirroring
         self.shuffle = shuffle
-        # Load labels
-        with open(self.label_path, 'r') as f:
-            self.labels = json.load(f)
+        self.labels = self._load_labels()
+        
+        
         # Get list of image files
         self.image_files = [f for f in os.listdir(self.file_path) if os.path.isfile(os.path.join(self.file_path, f))]
         if self.shuffle:
             np.random.shuffle(self.image_files)
         self.index = 0
         self.epoch = 0
+    # Load labels
+    def _load_labels(self):
+        with open(self.label_path, 'r') as file:
+            labels = json.load(file)
+        return labels
 
     def next(self):
         # This function creates a batch of images and corresponding labels and returns them.
@@ -60,14 +65,9 @@ class ImageGenerator:
 
             image_file = self.image_files[self.index]
             image_path = os.path.join(self.file_path, image_file)
-
-            # Check if the file is a .npy file
-            if image_file.endswith('.npy'):
-                with open(image_path, 'rb') as f:
-                    image = np.load(f)
-            else:
-                # Read the image using imageio.v2
-                image = imageio.imread(image_path)
+            image = np.load(image_path)
+            image_key = os.path.splitext(image_file)[0]  # Strip the .npy extension
+            
 
             # Resize the image using PIL
             image = Image.fromarray(image)
@@ -75,8 +75,11 @@ class ImageGenerator:
             image = np.array(image)
 
             # Apply mirroring
-            if self.mirroring and np.random.rand() > 0.5 and self.index == 0:
-                img = np.fliplr(img)
+            if self.mirroring:
+                if np.random.rand() > 0.5:
+                    image = np.fliplr(image)
+                if np.random.rand() > 0.5:
+                    image = np.flipud(image)
 
              # Apply rotation
             if self.rotation & self.index == 0:
@@ -84,31 +87,9 @@ class ImageGenerator:
                 image = np.array(Image.fromarray(image).rotate(angle))
 
             batch_images.append(image)
-            batch_labels.append(self.labels[image_file])
+            batch_labels.append(self.labels[image_key])
             self.index += 1
 
-        # Ensure the batch has the correct size
-        while len(batch_images) < self.batch_size:
-            image_file = self.image_files[self.index]
-            image_path = os.path.join(self.file_path, image_file)
-            image = imageio.imread(image_path)
-            image = Image.fromarray(image)
-            image = image.resize(self.image_size[:2], Image.Resampling.LANCZOS)
-            image = np.array(image)
-
-            if self.rotation:
-                image = np.rot90(image)
-            if self.mirroring:
-                image = np.fliplr(image)
-
-            batch_images.append(image)
-            batch_labels.append(self.labels[image_file])
-
-            self.index += 1
-            if self.index >= len(self.image_files):
-                self.index = 0
-                if self.shuffle:
-                    np.random.shuffle(self.image_files)
         #return images, labels
         return np.array(batch_images), np.array(batch_labels)
 
