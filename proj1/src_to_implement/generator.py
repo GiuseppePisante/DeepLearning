@@ -62,11 +62,22 @@ class ImageGenerator:
             if self.index >= len(self.image_files):
                 self.index = 0
                 self.epoch += 1
+                if self.shuffle:
+                    np.random.shuffle(self.image_files)
 
             image_file = self.image_files[self.index]
             image_path = os.path.join(self.file_path, image_file)
-            image = np.load(image_path)
-            image_key = os.path.splitext(image_file)[0]  # Strip the .npy extension
+
+            # Check if the file is a .npy file 
+            if image_file.endswith('.npy'):
+                with open(image_path, 'rb') as f:
+                    image = np.load(f)
+            else:
+                # Read the image using imageio.v2
+                image = imageio.imread(image_path)
+
+            #image = np.load(image_path)
+            #image_key = os.path.splitext(image_file)[0]  # Strip the .npy extension
             
 
             # Resize the image using PIL
@@ -82,11 +93,16 @@ class ImageGenerator:
                     image = np.flipud(image)
 
              # Apply rotation
-            if self.rotation & self.index == 0:
+            if self.rotation and self.index == 0:
                 angle = np.random.choice([90, 180, 270])
                 image = np.array(Image.fromarray(image).rotate(angle))
 
             batch_images.append(image)
+        
+            # Use the file name without extension as the key for labels
+            image_key = os.path.splitext(image_file)[0]
+
+            #batch_images.append(image)
             batch_labels.append(self.labels[image_key])
             self.index += 1
 
