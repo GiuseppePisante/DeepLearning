@@ -1,10 +1,12 @@
 from .Base import BaseLayer
 import numpy as np
 
+
 class FullyConnected(BaseLayer):
     def __init__(self, input_size, output_size):
         super().__init__()
         self.trainable = True
+        self._optimizer = None
         self.weights = np.random.rand(input_size + 1, output_size)
         
     def forward(self, input_tensor):
@@ -22,6 +24,10 @@ class FullyConnected(BaseLayer):
     @optimizer.setter
     def optimizer(self, value):
         self._optimizer = value
+
+    @property
+    def gradient_weights(self):
+        return self._gradient_weights
         
     def backward(self, error_tensor):
         # Compute gradient with respect to weights
@@ -29,6 +35,15 @@ class FullyConnected(BaseLayer):
         
         # Compute gradient with respect to input tensor (excluding bias term)
         gradient_input = np.dot(error_tensor, self.weights.T)
-        return gradient_input[:, :-1]  # Exclude the bias term
+        
+        # Remove bias term from gradient_input
+        gradient_input = gradient_input[:, :-1]
+        
+        # Update weights if optimizer is set
+        if self._optimizer:
+            self.weights = self._optimizer.calculate_update(self.weights, self._gradient_weights)
+        
+        return gradient_input
+    
     
     
