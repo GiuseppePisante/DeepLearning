@@ -1,6 +1,7 @@
 import unittest
 from Layers import FullyConnected
 from Layers import ReLU
+from Layers import SoftMax
 from Optimization import Optimizers
 import numpy as np
 #import NeuralNetwork
