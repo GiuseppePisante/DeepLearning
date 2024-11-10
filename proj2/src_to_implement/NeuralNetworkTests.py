@@ -5,7 +5,7 @@ from Layers import SoftMax
 from Optimization import Optimizers
 from Optimization import Loss
 import numpy as np
-#import NeuralNetwork
+import NeuralNetwork
 import matplotlib.pyplot as plt
 import tabulate
 import argparse
