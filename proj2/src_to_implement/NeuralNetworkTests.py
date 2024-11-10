@@ -3,6 +3,7 @@ from Layers import FullyConnected
 from Layers import ReLU
 from Layers import SoftMax
 from Optimization import Optimizers
+from Optimization import Loss
 import numpy as np
 #import NeuralNetwork
 import matplotlib.pyplot as plt
