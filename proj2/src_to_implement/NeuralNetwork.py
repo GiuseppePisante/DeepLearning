@@ -30,7 +30,7 @@ class NeuralNetwork():
         for _ in range(iterations):
             output_tensor, label_tensor = self.data_layer.next()
             self.forward()
-            loss = self.loss_layer.forward(output_tensor, label_tensor)
+            loss = self.loss_layer.forward(self.loss_layer.prediction_tensor, label_tensor)
             self.loss.append(loss)
             self.backward(label_tensor)
 
