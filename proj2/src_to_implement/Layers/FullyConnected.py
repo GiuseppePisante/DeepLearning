@@ -32,6 +32,10 @@ class FullyConnected(BaseLayer):
     def backward(self, error_tensor):
         # Compute gradient with respect to weights
         self._gradient_weights = np.dot(self.input_tensor.T, error_tensor)
+
+        # Update weights if optimizer is set
+        if self._optimizer:
+            self.weights = self._optimizer.calculate_update(self.weights, self._gradient_weights)
         
         # Compute gradient with respect to input tensor (excluding bias term)
         gradient_input = np.dot(error_tensor, self.weights.T)
@@ -39,9 +43,6 @@ class FullyConnected(BaseLayer):
         # Remove bias term from gradient_input
         gradient_input = gradient_input[:, :-1]
         
-        # Update weights if optimizer is set
-        if self._optimizer:
-            self.weights = self._optimizer.calculate_update(self.weights, self._gradient_weights)
         
         return gradient_input
     

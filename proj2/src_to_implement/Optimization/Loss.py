@@ -2,10 +2,10 @@ import numpy as np
 class CrossEntropyLoss():
     def __init__(self):
         self.loss = None
-        self.prediction_tensor = None  # Store prediction tensor
+        self.prediction_tensor = None
 
     def forward(self, prediction_tensor, label_tensor):
-        self.prediction_tensor = prediction_tensor  # Store prediction tensor
+        self.prediction_tensor = prediction_tensor
         
         # Compute the loss with added epsilon for stability
         self.loss = np.sum(-np.log(prediction_tensor[label_tensor == 1] + np.finfo(float).eps))
