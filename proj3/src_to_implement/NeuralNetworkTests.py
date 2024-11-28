@@ -1,5 +1,5 @@
 import unittest
-from Layers import Initializers, Flatten, Conv
+from Layers import Initializers, Flatten, Conv, Helpers
 from Optimization import Optimizers
 import numpy as np
 from scipy import stats
