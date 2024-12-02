@@ -1,10 +1,10 @@
 import unittest
-from Layers import Initializers, Flatten, Conv, Helpers
-from Optimization import Optimizers
+from Layers import *
+from Optimization import *
 import numpy as np
 from scipy import stats
 from scipy.ndimage.filters import gaussian_filter
-#import NeuralNetwork
+import NeuralNetwork
 import matplotlib.pyplot as plt
 import os
 import tabulate
