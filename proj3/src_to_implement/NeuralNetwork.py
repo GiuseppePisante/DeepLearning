@@ -3,10 +3,12 @@ import copy
 from sklearn.preprocessing import OneHotEncoder
 
 class NeuralNetwork():
-    def __init__(self, input_optimizer):
+    def __init__(self, input_optimizer, weights_initializer, bias_initializer, ):
         self.optimizer = input_optimizer
         self.loss = []
         self.layers = []
+        self.weights_initializer = weights_initializer
+        self.bias_initializer = bias_initializer
         self.data_layer = None
         self.loss_layer = None
         self.label_tensor = None
@@ -24,6 +26,7 @@ class NeuralNetwork():
 
     def append_layer(self, layer):
         if layer.trainable:
+            layer.initialize(copy.deepcopy(self.weights_initializer), copy.deepcopy(self.bias_initializer))
             layer.optimizer = copy.deepcopy(self.optimizer)
         self.layers.append(layer)
 

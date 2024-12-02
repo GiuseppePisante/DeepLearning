@@ -1,5 +1,6 @@
 from .Base import BaseLayer
 import numpy as np
+from copy import *
 
 
 class FullyConnected(BaseLayer):
@@ -30,6 +31,8 @@ class FullyConnected(BaseLayer):
         return self._gradient_weights
         
     def backward(self, error_tensor):
+        ## Change
+        self.error_tensor = error_tensor
         # Compute gradient with respect to weights
         self._gradient_weights = np.dot(self.input_tensor.T, error_tensor)
 
@@ -45,6 +48,24 @@ class FullyConnected(BaseLayer):
         
         
         return gradient_input
+    
+
+    def initialize(self, weights_initializer, bias_initializer):
+        weights = weights_initializer.initialize(np.shape(self.weights[:-1, :]), np.shape(self.weights[:-1, :])[0],
+                                                 np.shape(self.weights[:-1, :])[1])
+        bias = np.expand_dims(self.weights[-1, :], axis=0)
+        bias = bias_initializer.initialize(bias.shape, bias.shape[0], bias.shape[1])
+        self.weights = np.concatenate((weights, bias), axis=0)
+        return self.weights, bias
+
+    @property
+    def gradient_weights(self):
+        self.gradient = np.dot(self.input_tensor.T, self.error_tensor)
+        return self.gradient
+
+    def set_optimizer(self, optimizer):
+        self.optimizer = deepcopy(optimizer)
+        #return self.optimizer
     
     
     
