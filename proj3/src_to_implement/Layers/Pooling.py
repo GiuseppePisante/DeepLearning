@@ -1,31 +1,16 @@
-"""     self.batch_size = 2
-        self.input_shape = (2, 4, 7)
-        self.input_tensor = np.abs(np.random.random((self.batch_size, *self.input_shape)))
-
-        self.categories = 5
-        self.label_tensor = np.zeros([self.batch_size, self.categories])
-        for i in range(self.batch_size):
-            self.label_tensor[i, np.random.randint(0, self.categories)] = 1
-
-layer = Pooling.Pooling((2, 2), (2, 2))
-"""
-
 import numpy as np
 from .Base import BaseLayer
-#   https://medium.com/dataseries/basic-overview-of-convolutional-neural-network-cnn-4fcc7dbb4f17
 
-# https://towardsdatascience.com/gentle-dive-into-math-behind-convolutional-neural-networks-79a07dd44cf9
-# Figure 13
 
 
 class Pooling:
     def __init__(self, stride_shape, pooling_shape):
         super().__init__()
-        self.stride_shape = stride_shape        #(2,2) or (3,2)
-        self.pooling_shape = pooling_shape      # (2,2)
+        self.stride_shape = stride_shape       
+        self.pooling_shape = pooling_shape      
         self.trainable = False
 
-    def forward(self, input_tensor):   # (2,2,4,7)
+    def forward(self, input_tensor):  
         # get input_tensor parameters
         batch_size, channel, img_height, img_width = input_tensor.shape
         # Sliding window height and width
@@ -78,7 +63,7 @@ class Pooling:
         # for backward
         self.input_tensor = input_tensor
 
-        return self.pool_output     # (2,2,2,3) or overlap (2,2,2,6)
+        return self.pool_output     
 
     def backward(self, error_tensor):
 
@@ -91,7 +76,6 @@ class Pooling:
             for ch in range(channel):  # num of slides
                 for ht in range(img_height):
                     for wdt in range(img_width):
-                        #TODO: 1) by trial and error -> input_tensor.shape[3] ?  2)
                         idx_x = int(np.floor(self.pool_index[batch, ch, ht, wdt] / self.input_tensor.shape[3]))
                         idx_y = int(np.mod(self.pool_index[batch, ch, ht, wdt], self.input_tensor.shape[3]))
                         error_next_layer[batch, ch, idx_x, idx_y] += self.error_tensor[batch, ch, ht, wdt]

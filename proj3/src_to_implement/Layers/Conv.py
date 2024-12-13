@@ -1,24 +1,3 @@
-
-"""
-self.batch_size = 2
-        self.input_shape = (3, 10, 14)
-        self.input_size = 14 * 10 * 3
-        self.uneven_input_shape = (3, 11, 15)
-        self.uneven_input_size = 15 * 11 * 3
-        self.spatial_input_shape = np.prod(self.input_shape[1:])
-        self.kernel_shape = (3, 5, 8)
-        self.num_kernels = 4
-        self.hidden_channels = 3
-
-        self.categories = 5
-        self.label_tensor = np.zeros([self.batch_size, self.categories])
-        for i in range(self.batch_size):
-            self.label_tensor[i, np.random.randint(0, self.categories)] = 1
-
-            scipy.ndimage.correlate(input, weights, output=None, mode='reflect', cval=0.0, origin=0)
-"""
-
-
 import copy
 from scipy.signal import correlate2d, convolve2d
 import numpy as np
@@ -117,7 +96,7 @@ class Conv:
 
         # Padding
         # input padding we pad with half of the kernel size
-        pad_up = int(np.floor(self.conv_col / 2))  # (3, 5, 8)
+        pad_up = int(np.floor(self.conv_col / 2))  
         pad_left = int(np.floor(self.conv_row / 2))
 
         for batch in range(self.up_error_T.shape[0]):
@@ -153,7 +132,7 @@ class Conv:
             self.bias = self._biasOptimizer.calculate_update(self.bias, self.grad_bias)
 
         # again distinction between 2d and 3d
-        if len(self.conv_shape) == 2:   #if self.dim1:
+        if len(self.conv_shape) == 2:   
             next_error = next_error.reshape(next_error.shape[0],next_error.shape[1], next_error.shape[2])
 
         return next_error

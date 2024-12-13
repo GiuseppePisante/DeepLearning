@@ -14,8 +14,7 @@ class Sgd(Optimizer):
     
     def calculate_update(self, weight_tensor, gradient_tensor):
         update_weights = weight_tensor - (self.learning_rate * gradient_tensor)
-        # Refactor the optimizer weights to apply the new regularizer
-        if self.regularizer is not None:  # if set
+        if self.regularizer is not None:  
             gradient_tensor = self.regularizer.calculate_gradient(weight_tensor)
             update_weights = update_weights - (self.learning_rate * gradient_tensor)
         return update_weights
@@ -27,7 +26,7 @@ class SgdWithMomentum(Optimizer):
         super().__init__()
         self.learning_rate = learning_rate
         self.momentum_rate = momentum_rate
-        self.mu = 0.9 # other options: 0.95, 0.99
+        self.mu = 0.9 
         self.velocity = None
 
     def calculate_update(self, weight_tensor, gradient_tensor):
@@ -50,7 +49,7 @@ class Adam(Optimizer):
         self.rho = rho
         self.velocity = None
         self.squared_gradient_avg = None
-        self.iteration = 0 # to do bias correction
+        self.iteration = 0 
 
     def calculate_update(self, weight_tensor, gradient_tensor):
         if self.velocity is None:
