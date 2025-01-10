@@ -6,9 +6,12 @@ from copy import *
 class FullyConnected(BaseLayer):
     def __init__(self, input_size, output_size):
         super().__init__()
+        self.input_size = input_size
+        self.output_size = output_size
         self.trainable = True
         self._optimizer = None
         self.weights = np.random.rand(input_size + 1, output_size)
+        self._gradient_weights = None
         
     def forward(self, input_tensor):
         # Add bias term to input tensor
@@ -29,6 +32,10 @@ class FullyConnected(BaseLayer):
     @property
     def gradient_weights(self):
         return self._gradient_weights
+
+    @gradient_weights.setter
+    def gradient_weights(self, value):
+        self._gradient_weights = value
         
     def backward(self, error_tensor):
         ## Change
@@ -58,14 +65,8 @@ class FullyConnected(BaseLayer):
         self.weights = np.concatenate((weights, bias), axis=0)
         return self.weights, bias
 
-    @property
-    def gradient_weights(self):
-        self.gradient = np.dot(self.input_tensor.T, self.error_tensor)
-        return self.gradient
-
     def set_optimizer(self, optimizer):
         self.optimizer = deepcopy(optimizer)
         #return self.optimizer
-    
-    
-    
+
+
