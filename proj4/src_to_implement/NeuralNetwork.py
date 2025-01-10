@@ -1,65 +1,78 @@
-import numpy as np
 import copy
-from sklearn.preprocessing import OneHotEncoder
+import numpy as np
+from Optimization import Constraints, Loss, Optimizers
+
+#self.optimizer.regularizer.norm(weight_tensor)
 
 class NeuralNetwork():
-    def __init__(self, input_optimizer, weights_initializer, bias_initializer, ):
-        self.optimizer = input_optimizer
+
+    def __init__(self, optimizer, weights_initializer, bias_initializer):
+        self.optimizer = optimizer
         self.loss = []
-        self.layers = []
-        self.weights_initializer = weights_initializer
-        self.bias_initializer = bias_initializer
+        self.layers = [] # This list will store all the layers
         self.data_layer = None
         self.loss_layer = None
+        self.input_tensor = None
         self.label_tensor = None
+        self.weights_initializer = weights_initializer
+        self.bias_initializer = bias_initializer
         self._phase = None
 
-    @property
-    def phase(self):
-        return self._phase
-
-    @phase.setter
-    def phase(self, value):
-        self._phase = value
-        for layer in self.layers:
-            layer.phase = value
-
     def forward(self):
-        input_tensor, self.label_tensor = self.data_layer.next()
+        reg_loss = 0
+
+        self.input_tensor, self.label_tensor = self.data_layer.next()
+
         for layer in self.layers:
-            input_tensor = layer.forward(input_tensor)
-        regularization_loss = 0
-        if self.optimizer.regularizer is not None:
-            for layer in self.layers:
-                if layer.trainable:
-                    regularization_loss += self.optimizer.regularizer.norm(layer.weights)
-        return self.loss_layer.forward(input_tensor, self.label_tensor) + regularization_loss
-    
-    def backward(self, label_tensor):
-        error_tensor = self.loss_layer.backward(label_tensor)
+            self.input_tensor = layer.forward(self.input_tensor)
+            if self.optimizer.regularizer and (layer.trainable == True):
+                reg_loss += self.optimizer.regularizer.norm(layer.weights) # Get regularization loss inside all layers
+                                                                            # and sum it up
+
+        output = self.loss_layer.forward(self.input_tensor, self.label_tensor)
+
+        return output + reg_loss
+
+    def backward(self):
+
+        error_tensor = self.loss_layer.backward(self.label_tensor)
+
         for layer in reversed(self.layers):
             error_tensor = layer.backward(error_tensor)
 
     def append_layer(self, layer):
-        if layer.trainable:
-            layer.initialize(copy.deepcopy(self.weights_initializer), copy.deepcopy(self.bias_initializer))
-            layer.optimizer = copy.deepcopy(self.optimizer)
-        self.layers.append(layer)
+
+        if (layer.trainable == True): #Only if the layer is trainable (has trainable parameters)
+            optimizer = copy.deepcopy(self.optimizer) #Copy optimizer, set and initialize it
+            layer.optimizer = optimizer 
+            layer.initialize(self.weights_initializer, self.bias_initializer) # Initialize trainable layer with the stored initializers
+            
+        self.layers.append(layer) # Appends the layer to the layers list, whether or not it's trainable
 
     def train(self, iterations):
-        self.phase = True  # Training phase
-        for _ in range(iterations):
-            loss = self.forward()
-            self.loss.append(loss)
-            self.backward(self.label_tensor)
+        self.phase=False
+        for layer in self.layers:
+            layer.testing_phase = self.phase
+
+        for iteration in range(iterations):
+            self.loss.append(self.forward())
+            error = self.backward()
 
     def test(self, input_tensor):
-        self.phase = False  # Testing phase
+        self.phase=True
         for layer in self.layers:
             input_tensor = layer.forward(input_tensor)
-        return input_tensor
+            layer.testing_phase = self.phase
+        prediction = input_tensor
 
+        return prediction
 
+    @property # provides an interface to instance attributes.
+    def phase(self):
+        return self._phase
 
-
-
+    @phase.setter
+    def phase(self, phase):
+        self._phase = phase
+        for layer in self.layers:
+            layer.testing_phase = phase
