@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import os
 import argparse
 import tabulate
+from Layers import Dropout, BatchNormalization, RNN, Sigmoid, TanH
 
 ID = 3  # identifier for dispatcher
 
