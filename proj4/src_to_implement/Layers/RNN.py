@@ -27,6 +27,7 @@ class RNN(BaseLayer):
         self._weights = None
         self.optimizer = None
         
+        # Set the list of layers that make up the RNN
         self.layers = [
             FullyConnected(input_size + hidden_size, hidden_size),
             TanH(),
@@ -47,8 +48,9 @@ class RNN(BaseLayer):
             input_vector = input_tensor[t]
             
             tensor = np.concatenate([input_vector, self.hidden_state]) # Join a sequence of arrays along an existing axis.
-            tensor = np.expand_dims(tensor, axis=0) #Expand the shape of an array.
+            tensor = np.expand_dims(tensor, axis=0) # Expand the shape of an array.
                                                     # Insert a new axis that will appear at the axis position in the expanded array shape.
+            # We start the forward pass through layers defined in self.layers
             loc = self.layers[0].forward(tensor)
             local_states.append(self.layers[0].input_tensor)
 
@@ -76,26 +78,32 @@ class RNN(BaseLayer):
         FC1_weights = np.zeros_like(self.layers[0].weights) # Same as above for first FC layer
 
         for t in reversed(range(B)):
+            # Restore the states for each layer from self.states for the current time step t
             self.layers[3].activations = self.states[t][3]
             self.layers[2].input_tensor = self.states[t][2]
             self.layers[1].activations = self.states[t][1]
             self.layers[0].input_tensor = self.states[t][0]
 
+            # Backward pass through layers
             error = error_tensor[t]
             error = self.layers[3].backward(error)
             error = self.layers[2].backward(error)
-            error += hid_error # Accumulate error
+            error += hid_error # Accumulate error from hidden state
 
             error = self.layers[1].backward(error)
             error = self.layers[0].backward(error)
-            hid_error = error[:,self.input_size:]
+            hid_error = error[:,self.input_size:] # update to the error corresponding to the hidden state dimension
             
+            # Accumulation from the gradient weights of the layers
             FC1_weights += self.layers[0].gradient_weights
             FC2_weights += self.layers[2].gradient_weights
+
+            # Store the error tensor for the current time step t
             output_tensor[t] = error[0, :self.input_size]
             
         self.gradient_weights = FC1_weights
 
+        # Update the weights of the layers with the optimizer
         if self.optimizer is not None:
             self.layers[2].weights = self.optimizer.calculate_update(self.layers[2].weights, FC2_weights)
             self.layers[0].weights = self.optimizer.calculate_update(self.layers[0].weights, FC1_weights)
