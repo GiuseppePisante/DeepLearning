@@ -19,7 +19,7 @@ class BatchNormalization(Base.BaseLayer):
                                                                 # (because other types of layers have it as well)
                                                                 # so there must be something in the place of weights and bias initializers.
         '''Initializes always the weights with ones and the biases with zeros,
-        ince you do not want the weights  and bias to have an impact at the beginning of the training.'''
+        since you do not want the weights  and bias to have an impact at the beginning of the training.'''
 
         weights_initializer = None
         bias_initializer = None
@@ -57,16 +57,20 @@ class BatchNormalization(Base.BaseLayer):
             self.ref_input_tensor = self.input_tensor
 
         if not self.testing_phase:
+            # Compute the mean and standard deviation of the input tensor
             self.mean_k = np.mean(self.ref_input_tensor, axis = 0)
             self.var_k = np.std(self.ref_input_tensor, axis = 0)
 
+            # Normalize the input tensor
             self.X = (self.ref_input_tensor - self.mean_k) / (np.sqrt(self.var_k**2 + epsilon))
+            # SCALE AND SHIFT the normalized tensor using learned weights(to scale) and biases(to shift)
             self.Y = self.weights * self.X + self.bias
 
+            # Update the testing mean and variance using the momentum term alpha
             self.mean = alpha * self.mean + (1 - alpha) * self.mean_k
             self.var = alpha * self.var + (1 - alpha) * self.var_k
         
-        else: # Change for testing
+        else: # Change for testing, using running mean and variance computed during training
             self.X = (self.ref_input_tensor - self.mean) / np.sqrt(self.var**2 + epsilon)
             self.Y = self.weights * self.X + self.bias
 
@@ -76,11 +80,15 @@ class BatchNormalization(Base.BaseLayer):
         return self.Y
 
     def backward(self, error_tensor):
+        # Check if the input is for a CNN
         CNN = len(error_tensor.shape) == 4
 
+        # If so the error tensor is reformatted
         if CNN: self.error_tensor = self.reformat(error_tensor)
         else: self.error_tensor = np.reshape(error_tensor,self.X.shape)
 
+        # Compute the gradient of the loss with respect to the weights and biases (Chain Rule)
+        # We use the normalizes input tensor X to compute the gradients
         gradient_weights = np.sum(self.error_tensor * self.X, axis = 0)
         self.gradient_weights = np.reshape(gradient_weights, [1, self.channels])
 
@@ -92,6 +100,7 @@ class BatchNormalization(Base.BaseLayer):
         if self.bias_optimizer is not None:
             self.bias = self.bias_optimizer.calculate_update(self.bias, self.gradient_bias)
 
+        # Compute the gradient of the loss with respect to the input tensor through hinted helpers function
         self.gradient_input = Helpers.compute_bn_gradients(
             self.error_tensor,
             self.ref_input_tensor,
